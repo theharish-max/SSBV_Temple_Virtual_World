@@ -189,6 +189,16 @@ body.cbopen .cbpanel{display:flex}
 .kailasa-loccopy .mapbtn{margin:.35rem .35rem .35rem 0}
 @media(max-width:850px){.kailasa-location{grid-template-columns:1fr;max-width:620px;gap:1.2rem}.kailasa-mapcol .mapbox{max-height:540px}.kailasa-loccopy{max-width:none}}
 </style>
+<style id="temple-motion">
+@media (prefers-reduced-motion: no-preference){
+.explore,.card,.opt{transition:transform .22s ease,box-shadow .22s ease,background-color .22s ease,color .22s ease}
+.explore:hover{transform:translateY(-3px);box-shadow:0 10px 30px #e8b92330}
+.card:hover{transform:translateY(-5px);box-shadow:0 16px 30px #0005}
+.opt:hover{transform:translateY(-3px);box-shadow:0 8px 24px #0003}
+.explore:active,.card:active,.opt:active{transform:scale(.98)}
+}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}.card img{transition:none}}
+</style>
 </head>
 <body>
 <section id="landing" class="landing">
@@ -1175,6 +1185,24 @@ initSlider=function(){if(!$('historyframe'))return;const t=cur;const go=i=>{slid
  cbPageAction=function(command){const q=cbCommandText(command),n=serial(q);if(n!==null&&/^(?:open|show|take|go|visit|select|choose|view|display|navigate|switch|explore)\b/.test(q)){if(n<1||n>T.length){cbReadReply(`Choose a temple number from 1 to ${T.length}.`,true);return true}const x=T[n-1];cbOpen(false);openTemple(x);const view=/\b(?:history|information|details)\b/.test(q)?'info':/\b(?:map|location|directions)\b/.test(q)?'location':/\b(?:photos?|images?|gallery)\b/.test(q)?'images':/\b(?:speciality|specialty|special features)\b/.test(q)?'speciality':null;if(view)document.querySelector(`[data-v="${view}"]`).click();cbReadReply(`Opening ${view?L[view]+' for ':''}temple ${n}, ${x.name}.`,true);return true}return oldAction(command)};
  const hint=document.createElement('p');hint.className='note';hint.textContent='Voice guide: say “Open the first temple”, “Go to temple number two”, or “Show the history of the third temple”.';document.querySelector('#home .hero').appendChild(hint);
  $('guidefab').title='Say “Open the first temple” or “Open temple number two”';
+})();
+/* Temple Trails page motion — synchronous navigation, cancellable entrances. */
+(()=>{
+ const baseShow=show;
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ let running=[];
+ const cancel=()=>{running.forEach(a=>a.cancel());running=[]};
+ const animate=(el,frames,options)=>{if(el&&el.animate)running.push(el.animate(frames,options))};
+ show=function(name){
+  const target=pages[name];
+  const entering=target&&target.classList.contains('hidden');
+  cancel();baseShow(name);
+  if(!entering||!target||reduced.matches)return;
+  animate(target,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:380,easing:'cubic-bezier(.22,1,.36,1)'});
+  const items=name==='home'?target.querySelectorAll('.card'):name==='options'?target.querySelectorAll('.opt'):[];
+  items.forEach((el,i)=>animate(el,[{opacity:0,transform:'translateY(24px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:460,delay:65+Math.min(i,8)*55,easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'}));
+ };
+ reduced.addEventListener?.('change',()=>{if(reduced.matches)cancel()});
 })();
 </script>
 </body>
